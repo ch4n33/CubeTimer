@@ -1,27 +1,5 @@
 import random
-
-class CubeState:
-    def __init__(self, cube_type: str, scramble: list[str]) -> None:
-        
-        for i in scramble:
-            match len(i):
-                case 1:
-                    if i.lower() not in ['u', 'r', 'f', 'd', 'l', 'b']:
-                        raise ValueError('Invalid scramble')
-                case 2:
-                    if i[0].lower() not in ['u', 'r', 'f', 'd', 'l', 'b']:
-                        raise ValueError('Invalid scramble')
-                    if i[1] not in ['2', "'"]:
-                        raise ValueError('Invalid scramble')
-                case _:
-                    raise ValueError('Invalid scramble')
-            # find redundant scramble, not implemented
-            
-        self.cube_type = cube_type
-        self.scramble = scramble
-    
-    def __str__(self) -> str:
-        return ' '.join(self.scramble)
+from formula import Formula
 
 
 class Scramble:
@@ -37,7 +15,7 @@ class Scramble:
         self._rotations = ['2', '', "'"]
         self.count = [0,0,15,25,40,60]
     
-    def get(self, cube_type: int, length=None) -> CubeState:
+    def get(self, cube_type: int, length=None) -> Formula:
         scramble = []
         before = ''
         if length is None:
@@ -50,4 +28,4 @@ class Scramble:
                 scramble.append(next + random.choice(self._rotations))
                 before = next.lower()
                 
-        return CubeState(cube_type, scramble)
+        return Formula(cube_type, scramble)

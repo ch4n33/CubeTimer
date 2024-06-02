@@ -1,13 +1,45 @@
 import sys
 import random
 import pycuber as pc
+import statistics as stat
 from scramble import Scramble
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton,\
-        QVBoxLayout, QLabel, QWidget, \
-        QComboBox, QLineEdit, QTextEdit, \
-        QGridLayout, QInputDialog 
-
+from util import parse_time, format_time
+from PyQt5.QtWidgets import \
+    QApplication, QMainWindow, QPushButton,\
+    QVBoxLayout, QLabel, QWidget, \
+    QComboBox, QLineEdit, QTextEdit, \
+    QGridLayout, QInputDialog 
 from PyQt5.QtCore import Qt, QTimer, QTime
+
+
+class SelectTagDialog(QInputDialog):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+    
+    def initUI(self):
+        self.setWindowTitle('Select Tag')
+        self.setLabelText('Enter a tag for this session:')
+        self.setOkButtonText('Select')
+        self.setCancelButtonText('Cancel')
+        self.setInputMode(QInputDialog.TextInput)
+        self.setTextValue('default')
+        
+        self.ui_select_cube_type()
+        self.show()
+
+    def getText(self):
+        return self.textValue()
+            
+    def ui_select_cube_type(self):
+        # 큐브 종류 선택
+        self.cube_type_label = QLabel('Select Cube Type:', self)
+        self.layout.addWidget(self.cube_type_label, 0, 0)
+        
+        self.cube_type_combo = QComboBox(self)
+        self.cube_type_combo.addItems(['2x2', '3x3', '4x4', '5x5'])
+        self.layout.addWidget(self.cube_type_combo, 0, 1)
+
 
 class CubeTimerApp(QMainWindow):
     def __init__(self):
@@ -18,7 +50,10 @@ class CubeTimerApp(QMainWindow):
         self.time = QTime(0, 0)
         self.timer_running = False
         self.config = {}
-        
+        self.initUI()
+        self.init_data()
+    
+    def initUI(self):    
         self.setWindowTitle('Cube Timer')
         self.setGeometry(100, 100, 800, 600)
         
@@ -27,26 +62,25 @@ class CubeTimerApp(QMainWindow):
         
         self.layout = QGridLayout(self.central_widget)
         
-        # 큐브 종류 선택
-        self.cube_type_label = QLabel('Select Cube Type:', self)
-        self.layout.addWidget(self.cube_type_label, 0, 0)
-        
-        self.cube_type_combo = QComboBox(self)
-        self.cube_type_combo.addItems(['2x2', '3x3', '4x4', '5x5'])
-        self.layout.addWidget(self.cube_type_combo, 0, 1)
-        
+        self.ui_scramble()
+        self.ui_timer()
+        self.ui_history()
+
+    
+    def ui_scramble(self):
         # 스크램블 생성 버튼
         self.scramble_button = QPushButton('Generate Scramble', self)
         self.scramble_button.clicked.connect(self.generate_scramble)
-        self.layout.addWidget(self.scramble_button, 1, 0, 1, 2)
+        self.layout.addWidget(self.scramble_button, 0, 1)
         
         # 스크램블 표시
         self.scramble_label = QLabel('Scramble:', self)
-        self.layout.addWidget(self.scramble_label, 2, 0)
+        self.layout.addWidget(self.scramble_label, 1, 0)
         
         self.scramble_text = QLabel('', self)
-        self.layout.addWidget(self.scramble_text, 2, 1)
-        
+        self.layout.addWidget(self.scramble_text, 1, 1)
+    
+    def ui_timer(self):    
         # # 타이머 시작 버튼
         # self.start_timer_button = QPushButton('Start Timer', self)
         # self.layout.addWidget(self.start_timer_button, 3, 0, 1, 2)
@@ -54,37 +88,56 @@ class CubeTimerApp(QMainWindow):
         
         # 타이머 기록
         self.timer_state = QLabel('Timer', self)
-        self.layout.addWidget(self.timer_state, 3, 0)
+        self.layout.addWidget(self.timer_state, 2, 0)
         
         self.time_display = QLabel("00:00:000", self)
-        self.layout.addWidget(self.time_display, 3, 1)
+        self.layout.addWidget(self.time_display, 2, 1)
         
-        self.timer_save_button = QPushButton('Save Time', self)
-        self.layout.addWidget(self.timer_save_button, 3, 2)
+        self.timer_save_button = QPushButton('Reset Time', self)
+        self.layout.addWidget(self.timer_save_button, 2, 2)
         self.timer_save_button.clicked.connect(self.save_time)
-        
+    
+    def ui_history(self):
         # 태그 입력
         self.tag_label = QLabel('Tag:', self)
-        self.layout.addWidget(self.tag_label, 4, 0)
+        self.layout.addWidget(self.tag_label, 3, 0)
         
-        self.tag_input = QLineEdit(self)
-        self.layout.addWidget(self.tag_input, 4, 1)
+        self.tag_text = QLineEdit(self)
+        self.tag_text.setReadOnly(True)
+        self.layout.addWidget(self.tag_text, 3, 1)
+        
+        # 통계 표시
+        self.mean_label = QLabel('Mean:', self)
+        self.layout.addWidget(self.mean_label, 4, 0)
+        
+        self.mean_text = QLineEdit(self)
+        self.mean_text.setReadOnly(True)
+        self.layout.addWidget(self.mean_text, 4, 1)
+        
+        self.std_label = QLabel('Std Dev:', self)
+        self.layout.addWidget(self.std_label, 5, 0)
+        
+        self.std_text = QLineEdit(self)
+        self.std_text.setReadOnly(True)
+        self.layout.addWidget(self.std_text, 5, 1)
         
         # 이력 표시
         self.history_label = QLabel('History:', self)
-        self.layout.addWidget(self.history_label, 5, 0)
+        self.layout.addWidget(self.history_label, 6, 0)
         
         self.history_text = QTextEdit(self)
         self.history_text.setReadOnly(True)
-        self.layout.addWidget(self.history_text, 5, 1)
+        self.layout.addWidget(self.history_text, 6, 1, 6, 2)
         
+    
+    def init_data(self): 
         # 초기 설정 로드
         self.load_config()
         
         # 설정 변경은 아직 구현하지 않았습니다.
         
         # 초기 이력 로드
-        self.load_history(self.config['history_directory']+self.config['default_tag'])
+        self.load_history((self.config['history_directory'], self.config['default_tag']))
         self.generate_scramble()
         
     def load_config(self):
@@ -105,8 +158,7 @@ class CubeTimerApp(QMainWindow):
                 file.write(f"{key}={value}\n")
     
     def generate_scramble(self):
-        cube_type = self.cube_type_combo.currentText()
-        scramble = self.get_scramble(cube_type)
+        scramble = self.get_scramble(self.cube_type)
         self.scramble_text.setText(scramble)
         
     def get_scramble(self, cube_type):
@@ -118,36 +170,41 @@ class CubeTimerApp(QMainWindow):
             return str(scramble)
         else:
             self.scrambler = Scramble()
-            scramble = self.scrambler.get(int(cube_type[0]))
+            scramble = self.scrambler.get(int(cube_type))
             return str(scramble)
         
     def load_history(self, tag):
         # 이력 로드
+        dir = './'.join(tag)
         try:
-            with open(tag, 'r') as file:
+            with open(dir, 'r') as file:
                 history = file.read().split('\n')
                 firstline = history.pop(0)
                 cubeInfo = firstline
                 match cubeInfo:
                     case "2x2":
-                        self.cube_type_combo.setCurrentIndex(0)
+                        self.cube_type = 2
                     case "3x3":
-                        self.cube_type_combo.setCurrentIndex(1)
+                        self.cube_type = 3
                     case "4x4":
-                        self.cube_type_combo.setCurrentIndex(2)
+                        self.cube_type = 4
                     case "5x5":
-                        self.cube_type_combo.setCurrentIndex(3)
+                        self.cube_type = 5
                     case _:
                         print("No match")
                         raise ValueError("Invalid cube type found in history.")
                 self.history_text.setText('\n'.join(history))
+                self.tag_text.setText(tag[-1])
         except FileNotFoundError:
             self.history_text.setText('No history found.')
         except ValueError as e:
             self.history_text.setText('Error loading history: ' + str(e))
+        
+        self.statistics_update()
             
     def save_history(self, entry, tag):
-        with open(tag, 'a') as file:
+        dir = './'.join(tag)
+        with open(dir, 'a') as file:
             file.write(entry + '\n')
         self.load_history(tag)
         
@@ -163,9 +220,11 @@ class CubeTimerApp(QMainWindow):
 
     def timer_toggle(self):
         if self.timer_running:
+            self.timer_save_button.setEnabled(True)
             self.timer_running = False
             self.stop_timer()
         else:
+            self.timer_save_button.setEnabled(False)
             self.timer_running = True
             self.start_timer()
         
@@ -189,8 +248,22 @@ class CubeTimerApp(QMainWindow):
         time = self.time_display.text()
         scramble = self.scramble_text.text()
         entry = f"{time} - {scramble}"
-        self.save_history(entry, self.config['history_directory']+self.config['default_tag'])
+        self.save_history(
+            entry, 
+            (self.config['history_directory'], self.config['default_tag'])
+        )
         self.reset_timer()
+        
+    def statistics_update(self):
+        # 통계 업데이트
+        timelist = [parse_time(entry.split(' - ')[0]) for entry in self.history_text.toPlainText().split('\n')]
+        timelist = [time for time in timelist if time is not None]
+        
+        mean, std = stat.mean(timelist), stat.stdev(timelist)
+        print(timelist)
+        print(mean, std)
+        self.mean_text.setText(format_time(mean))
+        self.std_text.setText(format_time(std))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
