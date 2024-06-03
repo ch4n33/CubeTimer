@@ -1,4 +1,4 @@
-from formula import Formula, formula_from_stirng
+from .formula import Formula, formula_from_stirng
 
 import matplotlib.pyplot as plt
 import numpy as np

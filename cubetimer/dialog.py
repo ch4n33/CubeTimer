@@ -1,4 +1,4 @@
-from util import parse_time, format_time
+from .util import parse_time, format_time
 from PyQt5.QtWidgets import \
     QLabel, QComboBox, QWidget, QListWidget, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout
 from PyQt5.QtCore import pyqtSignal

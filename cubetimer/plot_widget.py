@@ -2,8 +2,7 @@ from PyQt5.QtWidgets import \
     QVBoxLayout, QWidget
 
 # for plotting cube status
-from cube import Cube
-from formula import * 
+from .cube import Cube, Formula
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 

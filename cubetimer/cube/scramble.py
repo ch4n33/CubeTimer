@@ -1,5 +1,5 @@
 import random
-from formula import Formula
+from .formula import Formula
 
 
 class Scramble:

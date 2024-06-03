@@ -1,15 +1,15 @@
 import statistics as stat
-from scramble import Scramble
-from plot_widget import MatplotlibWidget
-from dialog import SelectRecordDialog
-from util import parse_time, format_time
+from .cube import Scramble
+from .plot_widget import MatplotlibWidget
+from .dialog import SelectRecordDialog
+from .util import parse_time, format_time, get_app_data_path, ensure_app_data_directory
+# TODO appdata 또는 home directory에 history 파일을 저장하도록 수정하세요.
 
 from PyQt5.QtWidgets import \
     QMainWindow, QPushButton, QLabel,\
     QWidget, QLineEdit, QTextEdit, \
-    QGridLayout, QDialog
+    QGridLayout
 from PyQt5.QtCore import Qt, QTimer, QTime, QEvent
-
 
 
 class CubeTimerApp(QMainWindow):

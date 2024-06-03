@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication
-from app import CubeTimerApp
+from cubetimer import CubeTimerApp
 
 def main():
     app = QApplication(sys.argv)
