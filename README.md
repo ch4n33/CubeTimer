@@ -1,8 +1,4 @@
 #   CubeTimer
-##  Dependencies
-*   python>3.10
-*   PyQt5
-*   numpy
 
 ##  What is this project?
 *   Rubik's Cube Stopwatch
@@ -10,9 +6,14 @@
 *   Rubik's Cube Scramble Previewer
 *   Rubik's Cube Simulator (currently available on `test_cube.py`)
 ##  How to use?
-*   `$ git clone ~`
+### Dependencies
+*   python>3.10
+*   PyQt5
+*   numpy
+### Installation
 *   install dependencies
     *   `$ pip install PyQt5 numpy`
+*   `$ git clone ~`d
 *   `$ python main.py`
 
 *   you can build this code on your own, by pyinstaller, etc.
