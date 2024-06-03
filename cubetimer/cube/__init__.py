@@ -1,3 +1,3 @@
 from .cube import Cube
-from .formula import Formula
+from .formula import *
 from .scramble import Scramble

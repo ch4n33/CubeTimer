@@ -146,6 +146,7 @@ class CubeTimerApp(QMainWindow):
         # 설정 변경은 아직 구현하지 않았습니다.
         
         # 초기 이력 로드
+        print(self.config)
         self.load_history((self.config['history_directory'], self.config['default_record']))
         
     def load_config(self):
@@ -158,7 +159,7 @@ class CubeTimerApp(QMainWindow):
                     config[key] = value
                 self.config = config
         except FileNotFoundError:
-            return 'No config file found.'
+            raise 'No config file found.'
         
     def save_config(self):
         with open('config.txt', 'w') as file:

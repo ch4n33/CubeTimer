@@ -124,10 +124,25 @@ class Cube:
             self.rotate_permutation(rotation)
     
     def rotate_orientation(self, rotation:str):
+        def valid_piece(x,y,z, rotation:str) -> bool:
+            rotface, rotcount, rotlayer = rotation_parse(rotation)
+            if rotface == 'u' and y < rotlayer:
+                return True
+            if rotface == 'r' and x < rotlayer:
+                return True
+            if rotface == 'f' and z < rotlayer:
+                return True
+            if rotface == 'd' and y >= self.cube_type - rotlayer:
+                return True
+            if rotface == 'l' and x >= self.cube_type - rotlayer:
+                return True
+            if rotface == 'b' and z >= self.cube_type - rotlayer:
+                return True
+            return False
         for x in range(self.cube_type):
             for y in range(self.cube_type):
                 for z in range(self.cube_type):
-                    if self.valid_piece(x,y,z, rotation):
+                    if valid_piece(x,y,z, rotation):
                         # print(x,y,z, rotation, self.cube[x][y][z].x, self.cube[x][y][z].y, self.cube[x][y][z].z)
                         self.cube[x][y][z].rotation(rotation)
                         
@@ -142,12 +157,14 @@ class Cube:
             return rotcount
         rotface, rotcount, rotlayer = rotation_parse(rotation)
         rotcount = normalize(rotface, rotcount)
+        
+        # print(rotface, rotcount, rotlayer)
         if rotface in ['u', 'd']:
-            layers = [(x, 0 if rotface == 'u' else self.cube_type - rotlayer, z) for x in range(self.cube_type) for z in range(self.cube_type)]
+            layers = [(x, y if rotface == 'u' else self.cube_type - 1 - y, z) for y in range(rotlayer) for x in range(self.cube_type) for z in range(self.cube_type)]
         elif rotface in ['l', 'r']:
-            layers = [(0 if rotface == 'r' else self.cube_type - rotlayer, y, z) for y in range(self.cube_type) for z in range(self.cube_type)]
+            layers = [(x if rotface == 'r' else self.cube_type - 1 - x, y, z) for x in range(rotlayer) for y in range(self.cube_type) for z in range(self.cube_type)]
         elif rotface in ['f', 'b']:
-            layers = [(x, y, 0 if rotface == 'f' else self.cube_type - rotlayer) for x in range(self.cube_type) for y in range(self.cube_type)]
+            layers = [(x, y, z if rotface == 'f' else self.cube_type - 1 - z) for z in range(rotlayer) for x in range(self.cube_type) for y in range(self.cube_type)]
         
         # print(layers)
         new_positions = {}
@@ -179,21 +196,7 @@ class Cube:
             self.cube[nx][ny][nz] = temp_cube[x][y][z]
                     
     
-    def valid_piece(self, x,y,z, rotation:str) -> bool:
-        rotface, rotcount, rotlayer = rotation_parse(rotation)
-        if rotface == 'u' and y < rotlayer:
-            return True
-        if rotface == 'r' and x < rotlayer:
-            return True
-        if rotface == 'f' and z < rotlayer:
-            return True
-        if rotface == 'd' and y >= self.cube_type - rotlayer:
-            return True
-        if rotface == 'l' and x >= self.cube_type - rotlayer:
-            return True
-        if rotface == 'b' and z >= self.cube_type - rotlayer:
-            return True
-        return False
+    
     
     def get_face(self, face:str):
         face_colors = {
@@ -253,7 +256,10 @@ class Cube:
             ax.text(col + b/2, row - b/2 + 1, face, fontsize=12, ha='center', va='center')
             for i in range(b):
                 for j in range(b):
-                    square = plt.Rectangle((col + j, row - i), 1, 1, edgecolor='black', facecolor=face_colors[faceinfo[i,j]])
+                    facecolor = face_colors[faceinfo[i,j]]
+                    if facecolor == 'darkgrey':
+                        print('dark grey found in ', i, j, face)
+                    square = plt.Rectangle((col + j, row - i), 1, 1, edgecolor='black', facecolor=facecolor)
                     ax.add_patch(square)
                     # Add text to indicate the face
                     
@@ -275,21 +281,4 @@ class Cube:
 
         plt.show()
 
-
-if __name__ == '__main__':
-    cube = Cube(3)
-    # cube.show()
-    cube.attempt_formula(formula_from_stirng(3, "D2 B2 L2"))
-    cube.show()
-    while(True):
-        try:
-            i = input()
-            if i == 'q':
-                break
-            cube.attempt_formula(formula_from_stirng(3, i))
-            cube.show()
-        except ValueError as e:
-            print(e)
-            print('Invalid rotation')
-            break
         
