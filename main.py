@@ -3,6 +3,7 @@ import random
 import pycuber as pc
 import statistics as stat
 from scramble import Scramble
+
 from util import parse_time, format_time
 from PyQt5.QtWidgets import \
     QApplication, QMainWindow, QPushButton,\
@@ -10,6 +11,12 @@ from PyQt5.QtWidgets import \
     QComboBox, QLineEdit, QTextEdit, \
     QGridLayout, QInputDialog 
 from PyQt5.QtCore import Qt, QTimer, QTime
+
+# for plotting cube status
+from cube import Cube
+from formula import * 
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 
 class SelectTagDialog(QInputDialog):
@@ -39,6 +46,39 @@ class SelectTagDialog(QInputDialog):
         self.cube_type_combo = QComboBox(self)
         self.cube_type_combo.addItems(['2x2', '3x3', '4x4', '5x5'])
         self.layout.addWidget(self.cube_type_combo, 0, 1)
+
+
+class MatplotlibWidget(QWidget):
+    def __init__(self, parent=None):
+        super(MatplotlibWidget, self).__init__(parent)
+        
+        # Create a figure and add a plot
+        self.figure = Figure()
+        self.canvas = FigureCanvas(self.figure)
+        
+        # Layout to add the canvas
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.canvas)
+        self.setLayout(self.layout)
+        
+        # Draw something on the canvas
+        self.plot()
+
+    def plot(self, cube_type=3, formula=None):
+        # Clear the figure
+        self.figure.clear()
+        
+        # Add a subplot and plot the data
+        ax = self.figure.add_subplot()
+        cube = Cube(3)
+        cube.attempt_formula(formula)
+        cube.plot(ax)
+        
+        self.canvas.draw()
+    
+    def update_plot(self, cube_type, formula):
+        print('update plot : ', str(formula))
+        self.plot(cube_type, formula)
 
 
 class CubeTimerApp(QMainWindow):
@@ -79,6 +119,9 @@ class CubeTimerApp(QMainWindow):
         
         self.scramble_text = QLabel('', self)
         self.layout.addWidget(self.scramble_text, 1, 1)
+        
+        self.cube_show_widget = MatplotlibWidget(self)
+        self.layout.addWidget(self.cube_show_widget, 2,0, 2,1)
     
     def ui_timer(self):    
         # # 타이머 시작 버튼
@@ -88,46 +131,46 @@ class CubeTimerApp(QMainWindow):
         
         # 타이머 기록
         self.timer_state = QLabel('Timer', self)
-        self.layout.addWidget(self.timer_state, 2, 0)
+        self.layout.addWidget(self.timer_state, 3, 0)
         
         self.time_display = QLabel("00:00:000", self)
-        self.layout.addWidget(self.time_display, 2, 1)
+        self.layout.addWidget(self.time_display, 3, 1)
         
         self.timer_save_button = QPushButton('Reset Time', self)
-        self.layout.addWidget(self.timer_save_button, 2, 2)
+        self.layout.addWidget(self.timer_save_button, 3, 2)
         self.timer_save_button.clicked.connect(self.save_time)
     
     def ui_history(self):
         # 태그 입력
         self.tag_label = QLabel('Tag:', self)
-        self.layout.addWidget(self.tag_label, 3, 0)
+        self.layout.addWidget(self.tag_label, 4, 0)
         
         self.tag_text = QLineEdit(self)
         self.tag_text.setReadOnly(True)
-        self.layout.addWidget(self.tag_text, 3, 1)
+        self.layout.addWidget(self.tag_text, 4, 1)
         
         # 통계 표시
         self.mean_label = QLabel('Mean:', self)
-        self.layout.addWidget(self.mean_label, 4, 0)
+        self.layout.addWidget(self.mean_label, 5, 0)
         
         self.mean_text = QLineEdit(self)
         self.mean_text.setReadOnly(True)
-        self.layout.addWidget(self.mean_text, 4, 1)
+        self.layout.addWidget(self.mean_text, 5, 1)
         
         self.std_label = QLabel('Std Dev:', self)
-        self.layout.addWidget(self.std_label, 5, 0)
+        self.layout.addWidget(self.std_label, 6, 0)
         
         self.std_text = QLineEdit(self)
         self.std_text.setReadOnly(True)
-        self.layout.addWidget(self.std_text, 5, 1)
+        self.layout.addWidget(self.std_text, 6, 1)
         
         # 이력 표시
         self.history_label = QLabel('History:', self)
-        self.layout.addWidget(self.history_label, 6, 0)
+        self.layout.addWidget(self.history_label, 7, 0)
         
         self.history_text = QTextEdit(self)
         self.history_text.setReadOnly(True)
-        self.layout.addWidget(self.history_text, 6, 1, 6, 2)
+        self.layout.addWidget(self.history_text, 7, 1, 7, 2)
         
     
     def init_data(self): 
@@ -163,15 +206,10 @@ class CubeTimerApp(QMainWindow):
         
     def get_scramble(self, cube_type):
         # 여기서 스크램블을 생성하는 로직을 구현합니다.
-        if cube_type == '3x3':
-            cube = pc.Cube()
-            scramble = pc.Formula()
-            scramble.random(25)
-            return str(scramble)
-        else:
-            self.scrambler = Scramble()
-            scramble = self.scrambler.get(int(cube_type))
-            return str(scramble)
+        self.scrambler = Scramble()
+        scramble = self.scrambler.get(int(cube_type))
+        self.cube_show_widget.update_plot(cube_type, scramble)
+        return str(scramble)
         
     def load_history(self, tag):
         # 이력 로드

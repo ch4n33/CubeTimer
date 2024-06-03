@@ -119,7 +119,7 @@ class Cube:
         if formula is None:
             return
         for rotation in formula:
-            print(rotation_parse(rotation))
+            # print(rotation_parse(rotation))
             self.rotate_orientation(rotation)
             self.rotate_permutation(rotation)
     
@@ -137,7 +137,7 @@ class Cube:
     def rotate_permutation(self, rotation:str):
         def normalize(rotface, rotcount):
             # dlb rotation is reversed rotation
-            if rotface in ['d', 'l', 'b']:
+            if rotface in ['d', 'l', 'b'] and rotcount != 2:
                 return -rotcount
             return rotcount
         rotface, rotcount, rotlayer = rotation_parse(rotation)
@@ -149,7 +149,7 @@ class Cube:
         elif rotface in ['f', 'b']:
             layers = [(x, y, 0 if rotface == 'f' else self.cube_type - rotlayer) for x in range(self.cube_type) for y in range(self.cube_type)]
         
-        print(layers)
+        # print(layers)
         new_positions = {}
         
         for x, y, z in layers:
@@ -222,6 +222,51 @@ class Cube:
                         self.cube[self.cube_type-1][y][self.cube_type-1-x].x  # face == 'L'
         return faceinfo
     
+    def plot(self, ax):
+        # fig, ax = plt.subplots(figsize=(8,8))
+        
+        # Cube face colors
+        face_colors = {
+            'U': 'white',
+            'F': 'green',
+            'R': 'red',
+            'B': 'blue',
+            'L': 'orange',
+            'D': 'yellow',
+            0 : 'green',
+            1 : 'red',
+            2 : 'white',
+            3 : 'blue',
+            4 : 'orange',
+            5 : 'yellow',
+            6 : 'darkgrey'
+        }
+        b = self.cube_type
+        # Define the layout of the unfolded cube
+        faces = [
+            ('U', b, 2*b),
+            ('L', 0, b), ('F', b, b), ('R', 2*b, b), ('B', 3*b, b),
+            ('D', b, 0)
+        ]
+        
+        # Draw the faces
+        for face, col, row in faces:
+            faceinfo = self.get_face(face)
+            for i in range(b):
+                for j in range(b):
+                    square = plt.Rectangle((col + j, row - i), 1, 1, edgecolor='black', facecolor=face_colors[faceinfo[i,j]])
+                    ax.add_patch(square)
+                    # Add text to indicate the face
+                    ax.text(col + j + 0.5, row - i + 0.5, face, fontsize=12, ha='center', va='center')
+        
+        # Set the limits and aspect
+        ax.set_xlim(0, 4*b)
+        ax.set_ylim(-b, 3*b)
+        ax.set_aspect('equal')
+        ax.axis('off')  # Hide the axes
+
+        plt.show()
+
     def show(self):
         fig, ax = plt.subplots(figsize=(8,8))
         
@@ -269,9 +314,9 @@ class Cube:
 
 
 if __name__ == '__main__':
-    cube = Cube(4)
+    cube = Cube(3)
     # cube.show()
-    cube.attempt_formula(formula_from_stirng(4, 'R2 U2'))
+    cube.attempt_formula(formula_from_stirng(3, "D2"))
     cube.show()
     while(True):
         try:
