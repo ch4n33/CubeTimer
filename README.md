@@ -19,6 +19,20 @@
 *   you can build this code on your own, by pyinstaller, etc.
     *   `$ pip install -U pyinstaller`
     *   `$ pyinstaller -w --onefile main.py`
+### How to Use 
+*   space bar
+    *   stopwatch start-stop
+    *   hold-and-release to start stopwatch
+*   enter/return
+    *   does same thing to reset button
+*   history
+    *   total average, total stddev, average of recent 5
+    *   time, Used Scramble information
+*   scramble
+    *   provide fully random, but not redundant scramble
+    *   provide scramble result image
+*   Record
+    *   save related records in same file
 ##  To be updated
 *   save the files in user folder/directory, like `~`, or `%appdata%`
 *   export recorded time in pretty image form
